@@ -229,8 +229,7 @@ class Ruler {
         switch (caretInfo.node.nodeType) {
             case 1: // A non-text highlight-worthy element
                 // Highlight the entire element.
-                const element = caretInfo.node;
-                if (Ruler.ELEMENTS_TO_HIGHLIGHT.has(element.nodeName.toLowerCase())) {
+                if (Ruler.ELEMENTS_TO_HIGHLIGHT.has(caretInfo.node.nodeName.toLowerCase())) {
                     return elementRect;
                 } else {
                     return null;
@@ -238,14 +237,33 @@ class Ruler {
             case 3: // text
                 // Highlight just the row under the mouse, not the entire
                 // paragraph.
-                return {
-                    x: elementRect.x,
-                    y: caretInfo.rect.y,
-                    width: elementRect.width,
-                    height: caretInfo.rect.height
-                };
+                return this.getTextElementBounds(element, caretInfo);
             default: return null;
         }
+    }
+
+    getTextElementBounds(textElement, caretInfo) {
+        const elementRect = textElement.getBoundingClientRect();
+        const writingMode = window.getComputedStyle(textElement).writingMode;
+
+        if (writingMode.includes('vertical')) {
+            // caretInfo.rect.width is 0 for some reasons
+            // let's use font's size as a size
+            const fontSize = parseInt(window.getComputedStyle(textElement).fontSize) || 0;
+            return {
+                x: caretInfo.rect.x,
+                y: elementRect.y,
+                width: fontSize,
+                height: elementRect.height
+            };
+        }
+
+        return {
+            x: elementRect.x,
+            y: caretInfo.rect.y,
+            width: elementRect.width,
+            height: caretInfo.rect.height
+        };
     }
 
     /**
